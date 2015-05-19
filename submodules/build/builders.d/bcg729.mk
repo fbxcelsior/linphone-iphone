@@ -18,41 +18,42 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ############################################################################
-enable_cunit?=yes
+enable_bcg729?=yes
 
-cunit_project:=cunit
-cunit_project_dir:=.
-cunit_cmake_specific_options:=-DENABLE_STATIC=YES
+bcg729_project:=bcg729
+bcg729_project_dir:=.
+bcg729_cmake_specific_options:=-DENABLE_STATIC=YES
 
-cunit_src_dir=$(BUILDER_SRC_DIR)/${cunit_project_dir}/${cunit_project}
-cunit_build_dir=$(BUILDER_BUILD_DIR)/${cunit_project_dir}/${cunit_project}
+bcg729_src_dir=$(BUILDER_SRC_DIR)/${bcg729_project_dir}/${bcg729_project}
+bcg729_build_dir=$(BUILDER_BUILD_DIR)/${bcg729_project_dir}/${bcg729_project}
 
-${cunit_build_dir}/Makefile:
-	rm -rf ${cunit_build_dir}/CMakeCache.txt ${cunit_build_dir}/CMakeFiles/ && \
-	mkdir -p ${cunit_build_dir} && \
-	cd ${cunit_build_dir} && \
+${bcg729_build_dir}/Makefile:
+	rm -rf ${bcg729_build_dir}/CMakeCache.txt ${bcg729_build_dir}/CMakeFiles/ && \
+	mkdir -p ${bcg729_build_dir} && \
+	cd ${bcg729_build_dir} && \
 	cmake -DCMAKE_TOOLCHAIN_FILE=$(BUILDER_SRC_DIR)/build/toolchain.cmake -DIOS_ARCH=${ARCH} \
 		-DCMAKE_INSTALL_PREFIX=$(prefix) -DCMAKE_PREFIX_PATH=$(prefix) -DCMAKE_MODULE_PATH=$(prefix)/share/cmake/Modules/ \
-		${cunit_cmake_specific_options} ${cunit_src_dir}
+		${bcg729_cmake_specific_options} ${bcg729_src_dir}
 
-ifeq ($(enable_${cunit_project}),yes)
-build-${cunit_project}: ${cunit_build_dir}/Makefile
-	cd ${cunit_build_dir} && \
+ifeq ($(enable_${bcg729_project}),yes)
+build-${bcg729_project}: ${bcg729_build_dir}/Makefile
+	cd ${bcg729_build_dir} && \
 	make && \
 	make install
 else
-build-${cunit_project}:
-	@echo "${cunit_project} is disabled"
+build-${bcg729_project}:
+	@echo "${bcg729_project} is disabled"
 endif
 
 
-clean-${cunit_project}:
-	cd $(cunit_build_dir) && \
+clean-${bcg729_project}:
+	cd $(bcg729_build_dir) && \
 	make clean
 
-veryclean-${cunit_project}:
-	if [ -d $(cunit_build_dir) ]; then grep -v $(prefix) $(cunit_build_dir)/install_manifest.txt | xargs rm; fi && \
-	rm -rf $(cunit_build_dir)
+veryclean-${bcg729_project}:
+	if [ -d $(bcg729_build_dir) ]; then grep -v $(prefix) $(bcg729_build_dir)/install_manifest.txt | xargs rm; fi && \
+	rm -rf $(bcg729_build_dir)
 
-clean-makefile-${cunit_project}: veryclean-${cunit_project}
+clean-makefile-${bcg729_project}: veryclean-${bcg729_project}
+
 
