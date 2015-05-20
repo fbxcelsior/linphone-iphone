@@ -60,7 +60,7 @@ LINPHONE_IPHONE_VERSION=$(shell git describe --always)
 
 # list of the submodules to build, the order is important
 MEDIASTREAMER_PLUGINS := msilbc \
-						libilbc \
+						libilbc-rfc3951 \
 						msamr \
 						mssilk \
 						msx264 \
@@ -75,7 +75,7 @@ ifeq ($(enable_tunnel),yes)
 SUBMODULES_LIST += tunnel
 endif
 
-SUBMODULES_LIST += libantlr \
+SUBMODULES_LIST +=	antlr3 \
 					cunit \
 					belle-sip \
 					srtp \
