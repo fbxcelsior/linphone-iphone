@@ -82,17 +82,6 @@ static void sync_address_book(ABAddressBookRef addressBook, CFDictionaryRef info
 	return [address hasPrefix:@"sip:"] || [address hasPrefix:@"sips:"];
 }
 
-+ (NSString *)appendCountryCodeIfPossible:(NSString *)number {
-	if (![number hasPrefix:@"+"] && ![number hasPrefix:@"00"]) {
-		NSString *lCountryCode = [[LinphoneManager instance] lpConfigStringForKey:@"countrycode_preference"];
-		if (lCountryCode && [lCountryCode length] > 0) {
-			// append country code
-			return [lCountryCode stringByAppendingString:number];
-		}
-	}
-	return number;
-}
-
 + (NSString *)normalizeSipURI:(NSString *)address {
 	// replace all whitespaces (non-breakable, utf8 nbsp etc.) by the "classical" whitespace
 	address = [[address componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]
@@ -113,27 +102,6 @@ static void sync_address_book(ABAddressBookRef addressBook, CFDictionaryRef info
 		linphone_address_destroy(linphoneAddress);
 	}
 	return normalizedSipAddress;
-}
-
-+ (NSString *)normalizePhoneNumber:(NSString *)address {
-	NSMutableString *lNormalizedAddress = [NSMutableString stringWithString:address];
-	[lNormalizedAddress replaceOccurrencesOfString:@" "
-										withString:@""
-										   options:0
-											 range:NSMakeRange(0, [lNormalizedAddress length])];
-	[lNormalizedAddress replaceOccurrencesOfString:@"("
-										withString:@""
-										   options:0
-											 range:NSMakeRange(0, [lNormalizedAddress length])];
-	[lNormalizedAddress replaceOccurrencesOfString:@")"
-										withString:@""
-										   options:0
-											 range:NSMakeRange(0, [lNormalizedAddress length])];
-	[lNormalizedAddress replaceOccurrencesOfString:@"-"
-										withString:@""
-										   options:0
-											 range:NSMakeRange(0, [lNormalizedAddress length])];
-	return [FastAddressBook appendCountryCodeIfPossible:lNormalizedAddress];
 }
 
 + (BOOL)isAuthorized {
@@ -199,7 +167,9 @@ static void sync_address_book(ABAddressBookRef addressBook, CFDictionaryRef info
 					for (int i = 0; i < ABMultiValueGetCount(lMap); i++) {
 						CFStringRef lValue = ABMultiValueCopyValueAtIndex(lMap, i);
 
-						NSString *lNormalizedKey = [FastAddressBook normalizePhoneNumber:(__bridge NSString *)(lValue)];
+						NSString *lNormalizedKey = linphone_proxy_config_normalize_number(
+							NULL, <#const char * username #>, <#char * result #>,
+							<#size_t result_len #>)[FastAddressBook normalizePhoneNumber:(__bridge NSString *)(lValue)];
 						NSString *lNormalizedSipKey = [FastAddressBook normalizeSipURI:lNormalizedKey];
 						if (lNormalizedSipKey != NULL)
 							lNormalizedKey = lNormalizedSipKey;

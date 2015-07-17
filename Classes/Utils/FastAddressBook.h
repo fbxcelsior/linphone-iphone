@@ -33,8 +33,6 @@
 - (void)reload;
 - (void)saveAddressBook;
 + (BOOL)isAuthorized;
-+ (NSString*)appendCountryCodeIfPossible:(NSString*)number;
-+ (NSString*)normalizePhoneNumber:(NSString*)number;
 + (NSString*)normalizeSipURI:(NSString*)address;
 
 
