@@ -93,7 +93,7 @@
 		timeout -= .5f;
 		element =
 			[[UIApplication sharedApplication] accessibilityElementMatchingBlock:^BOOL(UIAccessibilityElement *e) {
-			  return [e.accessibilityLabel containsString:quality];
+			  return [e.accessibilityLabel containsSubstring:quality];
 			}];
 	}
 	XCTAssertNotNil(element);
@@ -206,6 +206,8 @@
 									   traits:UIAccessibilityTraitStaticText];
 
 	NSTimeInterval before = [[NSDate date] timeIntervalSince1970];
+	[tester tapRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]
+		inTableViewWithAccessibilityIdentifier:@"Chat list"];
 	[self startChatWith:[self me]];
 	NSTimeInterval after = [[NSDate date] timeIntervalSince1970];
 

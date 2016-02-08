@@ -72,7 +72,6 @@ NSString *const kLinphoneFileTransferRecvUpdate = @"LinphoneFileTransferRecvUpda
 
 const int kLinphoneAudioVbrCodecDefaultBitrate = 36; /*you can override this from linphonerc or linphonerc-factory*/
 
-extern void libmsilbc_init(MSFactory *factory);
 extern void libmsamr_init(MSFactory *factory);
 extern void libmsx264_init(MSFactory *factory);
 extern void libmsopenh264_init(MSFactory *factory);
@@ -279,6 +278,7 @@ struct codec_name_pref_table codec_pref_table[] = {{"speex", 8000, "speex_8k_pre
 	[NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
+#pragma deploymate push "ignored-api-availability"
 - (void)silentPushFailed:(NSTimer *)timer {
 	if (_silentPushCompletion) {
 		LOGI(@"silentPush failed, silentPushCompletion block: %p", _silentPushCompletion);
@@ -286,6 +286,7 @@ struct codec_name_pref_table codec_pref_table[] = {{"speex", 8000, "speex_8k_pre
 		_silentPushCompletion = nil;
 	}
 }
+#pragma deploymate pop
 
 #pragma mark - Migration
 
@@ -515,7 +516,8 @@ static void migrateWizardToAssistant(const char *entry, void *user_data) {
 }
 
 - (void)migrationFromVersion2To3 {
-	lp_config_for_each_entry(_configDb, "wizard", migrateWizardToAssistant, (__bridge void *)(self));
+	// DONT DO THAT!
+	//	lp_config_for_each_entry(_configDb, "wizard", migrateWizardToAssistant, (__bridge void *)(self));
 }
 
 #pragma mark - Linphone Core Functions
@@ -599,14 +601,15 @@ static void linphone_iphone_display_status(struct _LinphoneCore *lc, const char 
 		linphone_call_set_user_data(call, (void *)CFBridgingRetain(data));
 	}
 
+#pragma deploymate push "ignored-api-availability"
 	if (_silentPushCompletion) {
-
 		// we were woken up by a silent push. Call the completion handler with NEWDATA
 		// so that the push is notified to the user
 		LOGI(@"onCall - handler %p", _silentPushCompletion);
 		_silentPushCompletion(UIBackgroundFetchResultNewData);
 		_silentPushCompletion = nil;
 	}
+#pragma deploymate pop
 
 	const LinphoneAddress *addr = linphone_call_get_remote_address(call);
 	NSString *address = [FastAddressBook displayNameForAddress:addr];
@@ -897,6 +900,7 @@ static void linphone_iphone_popup_password_request(LinphoneCore *lc, const char 
 #pragma mark - Text Received Functions
 
 - (void)onMessageReceived:(LinphoneCore *)lc room:(LinphoneChatRoom *)room message:(LinphoneChatMessage *)msg {
+#pragma deploymate push "ignored-api-availability"
 	if (_silentPushCompletion) {
 		// we were woken up by a silent push. Call the completion handler with NEWDATA
 		// so that the push is notified to the user
@@ -904,16 +908,14 @@ static void linphone_iphone_popup_password_request(LinphoneCore *lc, const char 
 		_silentPushCompletion(UIBackgroundFetchResultNewData);
 		_silentPushCompletion = nil;
 	}
+#pragma deploymate pop
+
 	NSString *callID = [NSString stringWithUTF8String:linphone_chat_message_get_custom_header(msg, "Call-ID")];
 	const LinphoneAddress *remoteAddress = linphone_chat_message_get_from_address(msg);
 	NSString *from = [FastAddressBook displayNameForAddress:remoteAddress];
-	const char *chat = linphone_chat_message_get_text(msg);
-	if (chat == NULL)
-		chat = "";
 
 	char *c_address = linphone_address_as_string_uri_only(remoteAddress);
 	NSString *remote_uri = [NSString stringWithUTF8String:c_address];
-
 	ms_free(c_address);
 
 	if ([UIApplication sharedApplication].applicationState == UIApplicationStateBackground) {
@@ -923,7 +925,9 @@ static void linphone_iphone_popup_password_request(LinphoneCore *lc, const char 
 			NSString *chat = [UIChatBubbleTextCell TextMessageForChat:msg];
 			notif.repeatInterval = 0;
 			if ([[UIDevice currentDevice].systemVersion floatValue] >= 8) {
+#pragma deploymate push "ignored-api-availability"
 				notif.category = @"incoming_msg";
+#pragma deploymate pop
 			}
 			if ([LinphoneManager.instance lpConfigBoolForKey:@"show_msg_in_notif" withDefault:YES]) {
 				notif.alertBody = [NSString stringWithFormat:NSLocalizedString(@"IM_FULLMSG", nil), from, chat];
@@ -1254,6 +1258,7 @@ void networkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkReach
 		NSNumber *number = (NSNumber *)[dataNetworkItemView valueForKey:@"dataNetworkType"];
 		return [number intValue];
 	} else {
+#pragma deploymate push "ignored-api-availability"
 		CTTelephonyNetworkInfo *info = [[CTTelephonyNetworkInfo alloc] init];
 		NSString *currentRadio = info.currentRadioAccessTechnology;
 		if ([currentRadio isEqualToString:CTRadioAccessTechnologyEdge]) {
@@ -1261,6 +1266,7 @@ void networkReachabilityCallBack(SCNetworkReachabilityRef target, SCNetworkReach
 		} else if ([currentRadio isEqualToString:CTRadioAccessTechnologyLTE]) {
 			return network_4g;
 		}
+#pragma deploymate pop
 		return network_3g;
 	}
 }
@@ -1428,18 +1434,18 @@ static BOOL libStarted = FALSE;
 	[Log enableLogs:[self lpConfigIntForKey:@"debugenable_preference"]];
 	connectivity = none;
 
-	ms_init(); // Need to initialize mediastreamer2 before loading the plugins
-	// Load plugins if available in the linphone SDK - otherwise these calls will do nothing
-	libmsilbc_init(ms_factory_get_fallback());
-	libmssilk_init(ms_factory_get_fallback());
-	libmsamr_init(ms_factory_get_fallback());
-	libmsx264_init(ms_factory_get_fallback());
-	libmsopenh264_init(ms_factory_get_fallback());
-	libmsbcg729_init(ms_factory_get_fallback());
-	libmswebrtc_init(ms_factory_get_fallback());
-
 	theLinphoneCore = linphone_core_new_with_config(&linphonec_vtable, _configDb, (__bridge void *)(self));
 	LOGI(@"Create linphonecore %p", theLinphoneCore);
+
+	// Load plugins if available in the linphone SDK - otherwise these calls will do nothing
+	MSFactory *f = linphone_core_get_ms_factory(theLinphoneCore);
+	libmssilk_init(f);
+	libmsamr_init(f);
+	libmsx264_init(f);
+	libmsopenh264_init(f);
+	libmsbcg729_init(f);
+	libmswebrtc_init(f);
+	linphone_core_reload_ms_plugins(theLinphoneCore, NULL);
 
 	// Set audio assets
 	NSString *ring =
@@ -1507,7 +1513,6 @@ static BOOL libStarted = FALSE;
 		linphone_core_destroy(theLinphoneCore);
 		LOGI(@"Destroy linphonecore %p", theLinphoneCore);
 		theLinphoneCore = nil;
-		ms_exit(); // Uninitialize mediastreamer2
 
 		// Post event
 		NSDictionary *dict =
@@ -1786,7 +1791,7 @@ static int comp_call_state_paused(const LinphoneCall *call, const void *param) {
 	OSStatus lStatus = AudioSessionGetProperty(kAudioSessionProperty_AudioRoute, &lNewRouteSize, &lNewRoute);
 	if (!lStatus && lNewRouteSize > 0) {
 		NSString *route = (__bridge NSString *)lNewRoute;
-		allow = ![route containsString:@"Heads"] && ![route isEqualToString:@"Lineout"];
+		allow = ![route containsSubstring:@"Heads"] && ![route isEqualToString:@"Lineout"];
 		CFRelease(lNewRoute);
 	}
 	return allow;
